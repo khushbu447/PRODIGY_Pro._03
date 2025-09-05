@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✨ Pink Tic-Tac-Toe</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(135deg, #ffe4f0, #ffc1f3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      color: #5a0033;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5rem;
+      color: #d63384;
+      text-shadow: 1px 1px #fff;
+    }
+
+    #modeSelection {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    #modeSelection button,
+    #restartBtn {
+      background-color: #f7aef8;
+      color: #5a0033;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    #modeSelection button:hover,
+    #restartBtn:hover {
+      background-color: #ffb3d6;
+      transform: translateY(-2px);
+    }
+
+    #gameBoard {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-template-rows: repeat(3, 90px);
+      gap: 10px;
+      justify-content: center;
+      margin: 30px 0;
+      display: none;
+    }
+
+    .cell {
+      background-color: #fff0f6;
+      border: 2px solid #ff99cc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: bold;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.2s ease;
+    }
+
+    .cell:hover {
+      background-color: #ffe3ee;
+    }
+
+    #status {
+      font-size: 1.2rem;
+      margin-top: 10px;
+      color: #6d004a;
+    }
+
+    #restartBtn {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h1>💕 Pink Tic-Tac-Toe</h1>
+
+<div id="modeSelection">
+  <button onclick="startGame('pvp')">👯‍♀️ Player vs Player</button>
+  <button onclick="startGame('pvai')">💡 Player vs AI</button>
+</div>
+
+<div id="gameBoard"></div>
+<div id="status"></div>
+<button id="restartBtn" onclick="restartGame()">🔄 Restart Game</button>
+
+<script>
+  const board = document.getElementById('gameBoard');
+  const statusDisplay = document.getElementById('status');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let cells, currentPlayer, gameActive, gameMode;
+  const human = '❌';
+  const ai = '⭕';
+
+  const winningCombinations = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  function startGame(mode) {
+    gameMode = mode;
+    cells = Array(9).fill('');
+    currentPlayer = human;
+    gameActive = true;
+    document.getElementById('modeSelection').style.display = 'none';
+    board.style.display = 'grid';
+    restartBtn.style.display = 'inline-block';
+    statusDisplay.textContent = "Player ❌'s Turn";
+    renderBoard();
+  }
+
+  function renderBoard() {
+    board.innerHTML = '';
+    cells.forEach((cell, index) => {
+      const cellDiv = document.createElement('div');
+      cellDiv.classList.add('cell');
+      cellDiv.textContent = cell;
+      cellDiv.addEventListener('click', () => handleClick(index));
+      board.appendChild(cellDiv);
+    });
+  }
+
+  function handleClick(index) {
+    if (cells[index] !== '' || !gameActive) return;
+    cells[index] = currentPlayer;
+    renderBoard();
+
+    if (checkWin(currentPlayer)) {
+      statusDisplay.textContent = `Player ${currentPlayer} Wins! 🎉`;
+      gameActive = false;
+      return;
+    }
+
+    if (cells.every(cell => cell !== '')) {
+      statusDisplay.textContent = "It's a Draw! 🤝";
+      gameActive = false;
+      return;
+    }
+
+    if (gameMode === 'pvp') {
+      currentPlayer = currentPlayer === human ? ai : human;
+      statusDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+    } else if (gameMode === 'pvai') {
+      if (currentPlayer === human) {
+        currentPlayer = ai;
+        statusDisplay.textContent = "AI's Turn... 🤖";
+        setTimeout(aiMove, 600);
+      }
+    }
+  }
+
+  function aiMove() {
+    let move = findBestMove();
+    if (move !== null) cells[move] = ai;
+    renderBoard();
+
+    if (checkWin(ai)) {
+      statusDisplay.textContent = "AI Wins! 🤖🏆";
+      gameActive = false;
+      return;
+    }
+
+    if (cells.every(cell => cell !== '')) {
+      statusDisplay.textContent = "It's a Draw! 🤝";
+      gameActive = false;
+      return;
+    }
+
+    currentPlayer = human;
+    statusDisplay.textContent = "Your Turn (❌)";
+  }
+
+  function findBestMove() {
+    for (let combo of winningCombinations) {
+      const [a, b, c] = combo;
+      if (cells[a] === ai && cells[b] === ai && cells[c] === '') return c;
+      if (cells[a] === ai && cells[c] === ai && cells[b] === '') return b;
+      if (cells[b] === ai && cells[c] === ai && cells[a] === '') return a;
+    }
+    for (let combo of winningCombinations) {
+      const [a, b, c] = combo;
+      if (cells[a] === human && cells[b] === human && cells[c] === '') return c;
+      if (cells[a] === human && cells[c] === human && cells[b] === '') return b;
+      if (cells[b] === human && cells[c] === human && cells[a] === '') return a;
+    }
+    const empty = cells.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+    return empty.length > 0 ? empty[Math.floor(Math.random() * empty.length)] : null;
+  }
+
+  function checkWin(player) {
+    return winningCombinations.some(combo => combo.every(index => cells[index] === player));
+  }
+
+  function restartGame() {
+    document.getElementById('modeSelection').style.display = 'flex';
+    board.style.display = 'none';
+    restartBtn.style.display = 'none';
+    statusDisplay.textContent = '';
+  }
+</script>
+
+</body>
+</html>
